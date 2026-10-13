@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+.npm-cache/
+
+# Build output
+out/
+native/windows/AntiQuotaService.exe
+
+# VS Code extension package
+*.vsix
+*.tgz
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# Test files
+test_*.js
+
+# Local credentials and private state
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+accounts.json
+accounts.latest.json
+accounts.json*.tmp
+accounts.latest.json*.tmp
+accounts-*.json*.tmp
+antigravity-oauth-token
+antigravity-oauth-token.tmp-*
+oauth-client.json
+.accounts.lock
+service-token
+service.pid
+state_backup.json
+switch_pending.json
+update.lock
+service-start.lock
+service-start.lock.release-*
+service-start.lock.stale-*
+unsafe-install.json
+scm-update-restore.json
+.anti-quota/
+backups/
+
+# Local diagnostic artifacts (never commit or package)
+*.b64
+analyze_blob.py
+debug_reset_time.js
+simulate_restore.js
+verify_extraction.js
+test_restore.ts
+docs/bugment-custom-panel.html
+
+# Generated release checksums
+*.sha256

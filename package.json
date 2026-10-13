@@ -1,0 +1,213 @@
+{
+  "name": "anti-quota",
+  "displayName": "Anti Quota",
+  "description": "Antigravity 多账号配额管理 - 实时刷新、无感切换、自动切换",
+  "version": "1.2.1",
+  "publisher": "fhyfhy17",
+  "icon": "resources/icon.png",
+  "author": {
+    "name": "pinyinjj",
+    "url": "https://github.com/pinyinjj"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pinyinjj/anti-quota-fork-staging"
+  },
+  "homepage": "https://github.com/pinyinjj/anti-quota-fork-staging#readme",
+  "bugs": {
+    "url": "https://github.com/pinyinjj/anti-quota-fork-staging/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.80.0",
+    "node": ">=18.17.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "antigravity",
+    "quota",
+    "account",
+    "switch",
+    "gemini",
+    "claude"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "bin": {
+    "anti": "./out/cli/cli.js",
+    "anti-quota": "./out/cli/cli.js",
+    "aq": "./out/cli/cli.js"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "anti-quota.refresh",
+        "title": "Anti Quota: 刷新当前账号配额",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "anti-quota.refreshAll",
+        "title": "Anti Quota: 刷新所有账号配额"
+      },
+      {
+        "command": "anti-quota.showQuotaDetails",
+        "title": "Anti Quota: 显示配额详情"
+      },
+      {
+        "command": "anti-quota.openAccountManager",
+        "title": "Anti Quota: 打开账号管理"
+      },
+      {
+        "command": "anti-quota.addAccount",
+        "title": "Anti Quota: 添加账号"
+      },
+      {
+        "command": "anti-quota.switchAccount",
+        "title": "Anti Quota: 切换账号"
+      },
+      {
+        "command": "anti-quota.toggleAutoSwitch",
+        "title": "Anti Quota: 开关自动切换"
+      },
+      {
+        "command": "anti-quota.checkAndSwitch",
+        "title": "Anti Quota: 立即检查配额并切换"
+      },
+      {
+        "command": "anti-quota.showLogs",
+        "title": "Anti Quota: 显示输出日志"
+      },
+      {
+        "command": "anti-quota.testRestore",
+        "title": "Anti Quota: 测试恢复指令"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "antiQuotaSidebar",
+          "title": "Anti Quota",
+          "icon": "resources/activity-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "antiQuotaSidebar": [
+        {
+          "type": "webview",
+          "id": "antiQuota.accountsView",
+          "name": "账号管理",
+          "icon": "resources/activity-icon.svg"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Anti Quota",
+      "properties": {
+        "antiQuota.refreshInterval": {
+          "type": "number",
+          "default": 10,
+          "minimum": 10,
+          "maximum": 600,
+          "description": "配额自动刷新间隔（秒）"
+        },
+        "antiQuota.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否启用自动刷新"
+        },
+        "antiQuota.autoSwitch.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否启用配额低于阈值时自动切换账号"
+        },
+        "antiQuota.autoSwitch.threshold": {
+          "type": "number",
+          "default": 95,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "自动切换触发阈值（全局，已废弃，建议使用分模型设置）"
+        },
+        "antiQuota.autoSwitch.thresholds.claude": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Claude 模型触发阈值（百分比）"
+        },
+        "antiQuota.autoSwitch.thresholds.gemini-pro": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Gemini Pro 模型触发阈值（百分比）"
+        },
+        "antiQuota.autoSwitch.thresholds.gemini-flash": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Gemini Flash 模型触发阈值（百分比）"
+        },
+        "antiQuota.autoSwitch.checkInterval": {
+          "type": "number",
+          "default": 30,
+          "minimum": 10,
+          "maximum": 600,
+          "description": "自动切换检查间隔（秒），配额显著下降时会立即检查"
+        },
+        "antiQuota.autoSwitch.notifyOnSwitch": {
+          "type": "boolean",
+          "default": true,
+          "description": "自动切换后是否显示通知"
+        },
+        "antiQuota.autoSwitch.interactive": {
+          "type": "boolean",
+          "default": true,
+          "description": "配额不足时是否弹出确认框（手动确定后切换）"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "test:storage": "npm run compile && node tests/account-storage-regression.js",
+    "test:keyring": "npm run compile && node tests/agy-keyring-regression.js",
+    "test:oauth": "npm run compile && node tests/oauth-config-regression.js && node tests/oauth-callback-regression.js",
+    "test:network": "npm run compile && node tests/network-proxy-regression.js",
+    "test:download": "npm run compile && node tests/network-download-regression.js",
+    "test:cli-account": "npm run compile && node tests/cli-account-switch-regression.js",
+    "build:windows-service": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows-service.ps1",
+    "test:scm": "npm run compile && node tests/cli-scm-regression.js && node tests/windows-service-regression.js",
+    "test:update": "npm run compile && node tests/update-regression.js && node tests/cli-version-update-regression.js",
+    "test:privacy": "npm run compile && node tests/package-privacy-regression.js && node tests/repository-privacy-regression.js && node tests/archive-privacy-scanner-regression.js",
+    "test": "npm run test:storage && npm run test:keyring && npm run test:oauth && npm run test:network && npm run test:download && npm run test:cli-account && npm run test:scm && npm run test:update && npm run test:privacy",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "cli": "node out/cli/cli.js",
+    "cli:install": "npm run compile && npm link"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/proxy-from-env": "1.0.4",
+    "@types/sql.js": "^1.4.9",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "https-proxy-agent": "7.0.6",
+    "proxy-from-env": "1.1.0",
+    "socks-proxy-agent": "8.0.5"
+  },
+  "bundledDependencies": [
+    "https-proxy-agent",
+    "proxy-from-env",
+    "socks-proxy-agent"
+  ]
+}

@@ -1,0 +1,17 @@
+Third-Party Notices
+===================
+
+SQLite command-line shell
+-------------------------
+
+File: scripts/sqlite3.exe
+Version: 3.47.0 (Windows x64)
+Source: https://www.sqlite.org/2024/sqlite-tools-win-x64-3470000.zip
+Source archive SHA3-256: 4d74460ada4b5cc74cb74fb2320247ec8e369bbb7447a8b829a5d532824a4ee7
+File SHA-256: 3cf89763987cb010fbb888c17a0a431ad9b827918b1d6d6e7941704393d7aca4
+
+This executable is byte-for-byte identical to sqlite3.exe in the official
+SQLite archive above. The executable contains upstream build/debug metadata;
+it was not built on, or derived from data on, an Anti Quota user's machine.
+
+SQLite is in the public domain. See https://www.sqlite.org/copyright.html.
