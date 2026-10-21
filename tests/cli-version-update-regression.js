@@ -597,7 +597,13 @@ function updateDependencies(check, events, output, overrides = {}) {
                         endpointConnects: async () => true,
                     });
                 },
-                requestStop: async () => undefined,
+                // The authenticated ping fails during draining; only the strict
+                // endpoint probe below can decide whether that means process exit.
+                getServiceInfo: async () => ({ running: false, version: null, pid: null, switchProtocol: null }),
+                requestStop: async expectedStopPid => {
+                    assert.strictEqual(expectedStopPid, 123);
+                    return { stopping: true };
+                },
                 delay: async () => undefined,
             }, expectedPid),
             installLatestUpdate: async () => {
@@ -606,6 +612,7 @@ function updateDependencies(check, events, output, overrides = {}) {
             },
         }
     )), /服务端点仍可连接/);
+    assert.strictEqual(strictStopProbeCount, 2, '必须在停止请求后严格复核端点，不能读取真实本机服务身份');
     assert.strictEqual(strictStopInstallCalled, false, '旧服务端点仍可连接时不得进入 npm 安装');
 
     const available = checkResult('1.0.3', '1.1.0', true);

@@ -80,20 +80,31 @@
 [GitHub Releases](https://github.com/pinyinjj/anti-quota-fork-staging/releases/latest)
 下载需要的安装包到 Windows“下载”文件夹。
 
-安装 VS Code 插件：
+在 **PowerShell** 中安装 VS Code 插件：
 
-```bat
-code --install-extension "%USERPROFILE%\Downloads\anti-quota-1.2.1.vsix" --force
+```powershell
+code --install-extension "$env:USERPROFILE\Downloads\anti-quota-1.2.2.vsix" --force
 ```
 
-安装独立 CLI 和 Windows 系统服务（第二条命令需要接受管理员授权）：
+在 **PowerShell** 中安装独立 CLI 和 Windows 系统服务（第二条命令需要接受管理员授权）：
+
+```powershell
+npm install -g "$env:USERPROFILE\Downloads\anti-quota-1.2.2.tgz"
+& "$env:APPDATA\npm\anti-quota.cmd" service install
+```
+
+如果使用 **CMD（命令提示符）**，请改用以下命令，不要与 PowerShell 写法混用：
 
 ```bat
-npm install -g "%USERPROFILE%\Downloads\anti-quota-1.2.1.tgz"
+code --install-extension "%USERPROFILE%\Downloads\anti-quota-1.2.2.vsix" --force
+npm install -g "%USERPROFILE%\Downloads\anti-quota-1.2.2.tgz"
 "%APPDATA%\npm\anti-quota.cmd" service install
 ```
 
-关闭并重新打开 CMD，然后运行：
+PowerShell 的环境变量写作 `$env:USERPROFILE`、`$env:APPDATA`；执行引号中的命令路径
+时需要前面的 `&`。`%USERPROFILE%`、`%APPDATA%` 只用于 CMD。
+
+关闭并重新打开终端，然后运行：
 
 ```bat
 anti
@@ -111,6 +122,10 @@ anti
 本发行版不再内置 Google OAuth 客户端参数。使用绑定账号或刷新 Token 功能前，
 必须提供自己有权使用的 OAuth 客户端配置；程序不会回退到旧版内置值，也不会自动
 把旧值写入本机配置文件。
+
+安装包不包含个人 OAuth 配置，也不会自动迁移旧参数。升级会保留已有本机
+`oauth-client.json`；已配置的用户无需重复填写。新电脑或缺少此文件时仍须单独配置，
+仅能看到已绑定账号和缓存额度不代表 Token 刷新或账号切换可用。
 
 推荐在 `%USERPROFILE%\.anti-quota\oauth-client.json` 中保存以下 JSON，
 将占位符替换为实际客户端参数：

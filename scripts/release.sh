@@ -60,11 +60,14 @@ release_notes() {
     cat <<EOF
 ## $VERSION 变更
 
-- 项目仓库、安装说明和 CLI 自动更新源迁移到 \`pinyinjj/anti-quota-fork-staging\`。
-- 仓库保留 GitHub Fork 来源关联，默认分支使用清理后的独立提交历史。
-- 移除内置 Google OAuth 客户端参数，改为读取用户提供的本机配置。
-- 修正 VSIX 发布命令，确保包含运行时代理依赖。
-- 保留账号数据和 Windows SCM 服务；绑定和 Token 刷新前需完成下方配置。
+- 重新打包发布 VS Code 扩展（VSIX）、独立 CLI（TGZ）及各自的 SHA-256 校验文件。
+- 完善 Windows PowerShell / CMD 安装命令与本机 Google OAuth 配置说明。
+- 补齐更新流程回归测试的服务身份夹具，避免测试读取本机正在运行的服务；生产保护逻辑不变。
+- 安装包仍不内置 OAuth 客户端参数，不包含个人配置，也不自动迁移旧版参数。
+- 已配置用户升级时保留本机配置与账号数据；新电脑或缺少配置时仍须单独完成下方配置。
+
+本版未把任何本机 OAuth 配置恢复操作打入安装包。仓库继续保留 GitHub Fork 来源关联，
+默认分支使用清理后的独立提交历史。
 
 ## Google OAuth 配置（升级前阅读）
 
@@ -80,6 +83,8 @@ release_notes() {
 也支持 Google 下载的 \`{"installed":{"client_id":"YOUR_CLIENT_ID","client_secret":"YOUR_CLIENT_SECRET"}}\` 格式。
 文件与 \`accounts.json\` 同目录；设置 \`ANTI_QUOTA_DATA_DIR\` 时使用该数据目录。
 同一用户的 CLI 后台服务和 VS Code 扩展共享此文件，每次 OAuth 操作重新读取。
+升级不会覆盖已有 \`oauth-client.json\`；已配置用户无需重复填写，
+但仅看到已绑定账号和缓存额度不代表 Token 刷新或账号切换可用。
 
 也可同时设置 \`ANTI_QUOTA_GOOGLE_CLIENT_ID\` 和 \`ANTI_QUOTA_GOOGLE_CLIENT_SECRET\`
 环境变量；必须成对且优先于文件，仅设置一个会报错。变量必须对实际执行请求的
@@ -94,7 +99,13 @@ release_notes() {
 
 ### VS Code / Antigravity 扩展
 
-下载 \`$VSIX_FILE\`，然后运行：
+下载 \`$VSIX_FILE\`，在 **PowerShell** 中运行：
+
+\`\`\`powershell
+code --install-extension "\$env:USERPROFILE\\Downloads\\$VSIX_FILE" --force
+\`\`\`
+
+如果使用 **CMD（命令提示符）**，改用：
 
 \`\`\`bat
 code --install-extension "%USERPROFILE%\\Downloads\\$VSIX_FILE" --force
@@ -102,7 +113,14 @@ code --install-extension "%USERPROFILE%\\Downloads\\$VSIX_FILE" --force
 
 ### CLI 与后台服务
 
-下载 \`$TGZ_FILE\`，然后运行：
+下载 \`$TGZ_FILE\`，在 **PowerShell** 中运行：
+
+\`\`\`powershell
+npm install -g "\$env:USERPROFILE\\Downloads\\$TGZ_FILE"
+& "\$env:APPDATA\\npm\\anti-quota.cmd" service install
+\`\`\`
+
+如果使用 **CMD（命令提示符）**，改用：
 
 \`\`\`bat
 npm install -g "%USERPROFILE%\\Downloads\\$TGZ_FILE"
@@ -110,6 +128,7 @@ npm install -g "%USERPROFILE%\\Downloads\\$TGZ_FILE"
 \`\`\`
 
 第二条命令会请求管理员授权，安装真正的 Windows 系统服务。发布包已包含原生宿主。
+请勿混用两种 shell 的环境变量写法；PowerShell 执行引号内的命令路径需要前面的 \`&\`。
 
 两个安装包均附带对应的 \`.sha256\` 校验文件。CLI 自动更新只更新 CLI/后台服务，
 不会自动安装 VSIX。VSIX 为兼容现有安装保留 \`fhyfhy17.anti-quota\` 扩展 ID，
