@@ -8,7 +8,12 @@ import * as oauthService from './oauthService';
 import * as antigravityService from './antigravityService';
 import * as accountStorage from './accountStorage';
 import * as oauthCallbackServer from './oauthCallbackServer';
-import { parseQuotaSummary, ParsedQuotaSummary } from './quotaSummaryService';
+import {
+    findMissingQuotaData,
+    mergeQuotaSummaries,
+    parseQuotaSummary,
+    ParsedQuotaSummary,
+} from './quotaSummaryService';
 import { requestHttps } from './networkService';
 
 // Google Cloud Code API
@@ -598,6 +603,8 @@ async function fetchProjectId(accessToken: string): Promise<string | null> {
 
 /** 获取真实的共享配额桶。fetchAvailableModels 可能只返回可用性式的假 100%。 */
 async function fetchQuotaSummary(accessToken: string, projectId: string): Promise<ParsedQuotaSummary | null> {
+    const summaries: ParsedQuotaSummary[] = [];
+
     for (const hostname of QUOTA_SUMMARY_HOSTS) {
         try {
             const result = await httpsPost(hostname, RETRIEVE_QUOTA_SUMMARY_PATH, {
@@ -613,7 +620,8 @@ async function fetchQuotaSummary(accessToken: string, projectId: string): Promis
             const parsed = parseQuotaSummary(result.data);
             if (parsed) {
                 console.log(`[Quota] quota summary loaded from ${hostname}`);
-                return parsed;
+                summaries.push(parsed);
+                continue;
             }
             console.log(`[Quota] quota summary ${hostname} contained no valid quota buckets`);
         } catch (error) {
@@ -621,7 +629,7 @@ async function fetchQuotaSummary(accessToken: string, projectId: string): Promis
         }
     }
 
-    return null;
+    return mergeQuotaSummaries(summaries);
 }
 
 /** 获取账号配额 */
@@ -755,29 +763,27 @@ export async function fetchAccountQuota(accountId: string): Promise<QuotaData> {
         throw new Error('真实剩余用量暂不可用，已保留上一次配额数据');
     }
 
+    if (quota.models.length === 0) {
+        throw new Error('配额接口未返回可识别的 Claude 或 Gemini 模型');
+    }
+
+    const missingQuotaData = findMissingQuotaData(quota.models, quotaSummary, previousQuota?.models || []);
+    if (missingQuotaData.length > 0) {
+        throw new Error(`配额接口只返回部分数据（缺少 ${missingQuotaData.join('、')}），刷新失败，已保留上一次配额数据`);
+    }
+
     for (const model of quota.models) {
         const windows = model.name === 'claude' ? quotaSummary.claude : quotaSummary.gemini;
-        const previousModel = previousQuota?.models.find(item => item.name === model.name);
 
         if (windows?.fiveHour) {
             model.percentage = windows.fiveHour.percentage;
             if (windows.fiveHour.resetTime) model.reset_time = windows.fiveHour.resetTime;
-        } else if (previousModel) {
-            model.percentage = previousModel.percentage;
-            model.reset_time = previousModel.reset_time;
         }
 
         if (windows?.weekly) {
             model.weekly_percentage = windows.weekly.percentage;
             model.weekly_reset_time = windows.weekly.resetTime;
-        } else if (previousModel && typeof previousModel.weekly_percentage === 'number') {
-            model.weekly_percentage = previousModel.weekly_percentage;
-            model.weekly_reset_time = previousModel.weekly_reset_time;
         }
-    }
-
-    if (quota.models.length === 0) {
-        throw new Error('配额接口未返回可识别的 Claude 或 Gemini 模型');
     }
 
     // 按固定顺序排序模型：Claude Sonnet -> Gemini 3 Pro -> Gemini 3 Flash

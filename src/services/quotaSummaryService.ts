@@ -13,6 +13,72 @@ export interface ParsedQuotaWindows {
     weekly?: ParsedQuotaBucket;
 }
 
+export interface QuotaModelExpectation {
+    name: string;
+    displayName?: string;
+    weekly_percentage?: number;
+}
+
+function quotaGroupForModel(name: string): 'claude' | 'gemini' | undefined {
+    if (name === 'claude') return 'claude';
+    if (name === 'gemini-pro' || name === 'gemini-flash') return 'gemini';
+    return undefined;
+}
+
+/** 合并多个后端返回的互补窗口，优先保留列表中较早端点已给出的窗口。 */
+export function mergeQuotaSummaries(
+    summaries: ReadonlyArray<ParsedQuotaSummary | null | undefined>
+): ParsedQuotaSummary | null {
+    const merged: ParsedQuotaSummary = {};
+
+    for (const summary of summaries) {
+        if (!summary) continue;
+        for (const group of ['claude', 'gemini'] as const) {
+            const windows = summary[group];
+            if (!windows) continue;
+
+            const target = merged[group] || {};
+            if (!target.fiveHour && windows.fiveHour) target.fiveHour = windows.fiveHour;
+            if (!target.weekly && windows.weekly) target.weekly = windows.weekly;
+            if (target.fiveHour || target.weekly) merged[group] = target;
+        }
+    }
+
+    return merged.claude || merged.gemini ? merged : null;
+}
+
+/** 返回本次刷新缺失的模型或额度窗口；旧缓存中的周额度必须有新响应才能算刷新成功。 */
+export function findMissingQuotaData(
+    models: ReadonlyArray<QuotaModelExpectation>,
+    summary: ParsedQuotaSummary | null,
+    previousModels: ReadonlyArray<QuotaModelExpectation> = []
+): string[] {
+    const currentNames = new Set(models.map(model => model.name));
+    const missing = new Set<string>();
+
+    for (const previous of previousModels) {
+        if (!currentNames.has(previous.name)) {
+            missing.add(`${previous.displayName || previous.name} 模型`);
+        }
+    }
+
+    const groups = new Set(models.map(model => quotaGroupForModel(model.name)).filter(
+        (group): group is 'claude' | 'gemini' => !!group
+    ));
+    for (const group of groups) {
+        const label = group === 'claude' ? 'Claude' : 'Gemini';
+        const windows = summary?.[group];
+        if (!windows?.fiveHour) missing.add(`${label} 5小时额度`);
+
+        const weeklyWasTracked = previousModels.some(model =>
+            quotaGroupForModel(model.name) === group && typeof model.weekly_percentage === 'number'
+        );
+        if (weeklyWasTracked && !windows?.weekly) missing.add(`${label} 周额度`);
+    }
+
+    return [...missing];
+}
+
 function isValidFraction(value: unknown): value is number {
     return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
 }

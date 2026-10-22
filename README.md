@@ -83,21 +83,21 @@
 在 **PowerShell** 中安装 VS Code 插件：
 
 ```powershell
-code --install-extension "$env:USERPROFILE\Downloads\anti-quota-1.2.2.vsix" --force
+code --install-extension "$env:USERPROFILE\Downloads\anti-quota-1.2.3.vsix" --force
 ```
 
 在 **PowerShell** 中安装独立 CLI 和 Windows 系统服务（第二条命令需要接受管理员授权）：
 
 ```powershell
-npm install -g "$env:USERPROFILE\Downloads\anti-quota-1.2.2.tgz"
+npm install -g "$env:USERPROFILE\Downloads\anti-quota-1.2.3.tgz"
 & "$env:APPDATA\npm\anti-quota.cmd" service install
 ```
 
 如果使用 **CMD（命令提示符）**，请改用以下命令，不要与 PowerShell 写法混用：
 
 ```bat
-code --install-extension "%USERPROFILE%\Downloads\anti-quota-1.2.2.vsix" --force
-npm install -g "%USERPROFILE%\Downloads\anti-quota-1.2.2.tgz"
+code --install-extension "%USERPROFILE%\Downloads\anti-quota-1.2.3.vsix" --force
+npm install -g "%USERPROFILE%\Downloads\anti-quota-1.2.3.tgz"
 "%APPDATA%\npm\anti-quota.cmd" service install
 ```
 
